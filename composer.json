@@ -1,0 +1,26 @@
+{
+    "name": "zxdstyle\/elastic-sql",
+    "description": "Use SQL statements to query elasticsearch",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "zxdstyle",
+            "email": "zxdstyle@foxmail.com"
+        }
+    ],
+    "require": {
+        "elasticsearch/elasticsearch": "^7.11"
+    },
+    "autoload": {
+        "psr-4": {
+            "Zxdstyle\\ElasticSql\\": "src"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Zxdstyle\\ElasticSql\\ServiceProvider"
+            ]
+        }
+    }
+}
