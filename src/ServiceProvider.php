@@ -2,8 +2,6 @@
 
 namespace Zxdstyle\ElasticSql;
 
-use Zxdstyle\ElasticSql\Facades\Elastic as ElasticFacade;
-
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
     protected $defer = true;

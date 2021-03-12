@@ -23,6 +23,35 @@ class Query
 
     protected $offset;
 
+    /**
+     * @var array
+     */
+    public $wheres = [];
+
+    /**
+     * @var array
+     */
+    public $columns = [];
+
+    /**
+     * @var array
+     */
+    public $orders = [];
+
+    /**
+     * @var array
+     */
+    public $aggs = [];
+
+    protected $operators = [
+        '='  => 'eq',
+        '>'  => 'gt',
+        '>=' => 'gte',
+        '<'  => 'lt',
+        '<=' => 'lte',
+        '!=' => 'ne',
+    ];
+
     public function __construct(Engine $engine, Client $client)
     {
         $this->set('engine', $engine);
@@ -59,6 +88,49 @@ class Query
     {
         return $this->set("limit", $limit);
     }
+
+    public function where($column, $operator = null, $value = null, string $leaf = 'term', string $boolean = 'and'): self
+    {
+        // TODO
+//        if ($column instanceof Closure) {
+//            return $this->whereNested($column, $boolean);
+//        }
+
+        if (func_num_args() === 2) {
+            list($value, $operator) = [$operator, '='];
+        }
+
+        if (is_array($operator)) {
+            list($value, $operator) = [$operator, null];
+        }
+
+        if (in_array($operator, ['>=', '>', '<=', '<'])) {
+            $leaf = 'range';
+        }
+
+        if (is_array($value) && $leaf === 'range') {
+            $value = [
+                $this->operators['>='] => $value[0],
+                $this->operators['<='] => $value[1],
+            ];
+        }
+
+        $type = 'Basic';
+
+        $operator = $operator ? $this->operators[$operator] : $operator;
+
+        $this->wheres[] = compact(
+            'type',
+            'column',
+            'leaf',
+            'value',
+            'boolean',
+            'operator'
+        );
+
+        return $this;
+    }
+
 
     /**
      * @return Client

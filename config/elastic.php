@@ -29,5 +29,7 @@ return [
         'selector' => Elasticsearch\ConnectionPool\Selectors\StickyRoundRobinSelector::class,
 
         // Other Elasticsearch configuration items can also be added here
-    ]
+    ],
+
+    'index' => env("ELASTIC_DEFAULT_INDEX", "index")
 ];

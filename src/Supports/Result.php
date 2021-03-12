@@ -8,15 +8,19 @@ class Result
     protected $timed_out;
     protected $shards;
     protected $hits;
+    protected $rawResult;
+    protected $rawParams;
     protected $aggregations = null;
 
-    public function __construct(array $meta)
+    public function __construct(array $meta, $rawParams)
     {
         $this->setMeta($meta);
+        $this->rawParams = $rawParams;
     }
 
     public function setMeta(array $meta): Result
     {
+        $this->rawResult = $meta ?? [];
         $this->took = $meta['took'] ?? null;
         $this->timed_out = $meta['timed_out'] ?? null;
         $this->shards = $meta['_shards'] ?? null;
@@ -27,19 +31,29 @@ class Result
     }
 
     /**
+     * Get the original return result of the elasticsearch client
+     * @return mixed
+     */
+    public function getRaw()
+    {
+        return $this->rawResult;
+    }
+
+    /**
      * Total Hits
      * @return int
      */
-    public function totalHits(): int
+    public function getTotalHits(): int
     {
-        return $this->hits['total'];
+        $total = $this->hits['total'];
+        return is_int($total) ? $total : $total['value'];
     }
 
     /**
      * Max Score
      * @return float
      */
-    public function maxScore(): float
+    public function getMaxScore(): float
     {
         return $this->hits['max_score'];
     }
@@ -77,7 +91,11 @@ class Result
      */
     public function getHits(): array
     {
-        return $this->hits;
+        $hits = $this->hits['hits'];
+        foreach ($hits as &$hit) {
+            $hit = $this->formatHit($hit);
+        }
+        return $hits;
     }
 
     /**
@@ -95,12 +113,7 @@ class Result
      */
     public function toArray(): array
     {
-        return [
-            'took' => $this->took(),
-            'timed_out' => $this->timedOut(),
-            'shards' => $this->getShards(),
-            'hits' => $this->getHits()
-        ];
+        return $this->getHit();
     }
 
     /**
@@ -110,5 +123,32 @@ class Result
     public function toJson()
     {
         return json_encode($this->toArray());
+    }
+
+    public function debug()
+    {
+        return $this->rawParams;
+    }
+
+    /**
+     * @param $hit
+     * @return array
+     */
+    protected function formatHit($hit): array
+    {
+        return array_merge($hit['_source'], [
+            '_id' => $hit['_id'],
+            '_score' => $hit['_score']
+        ]);
+    }
+
+    /**
+     * @return array
+     */
+    protected function getHit(): array
+    {
+        $hit = $this->hits['hits'][0];
+
+        return $this->formatHit($hit);
     }
 }

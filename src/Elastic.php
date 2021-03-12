@@ -3,12 +3,13 @@
 
 namespace Zxdstyle\ElasticSql;
 
+use Closure;
 use Elasticsearch\Common\Exceptions\Missing404Exception;
-use Ramsey\Uuid\Uuid;
 use Elasticsearch\ClientBuilder;
 use Zxdstyle\ElasticSql\Exceptions\BadMethodCallException;
 use Zxdstyle\ElasticSql\Exceptions\NotFoundDocumentException;
 use Zxdstyle\ElasticSql\Exceptions\RunTimeException;
+use Zxdstyle\ElasticSql\Supports\Paginator;
 use Zxdstyle\ElasticSql\Supports\Result;
 
 /**
@@ -44,6 +45,8 @@ use Zxdstyle\ElasticSql\Supports\Result;
  */
 class Elastic
 {
+    protected $rawParams = [];
+
     public function __construct(Query $query)
     {
         $this->query = $query;
@@ -133,21 +136,21 @@ class Elastic
         }
     }
 
-//    public function first()
-//    {
-//        $this->query->limit(1);
-//
-//        return $this->get()->first();
-//    }
+    public function first()
+    {
+        $this->query->limit(1);
 
-    public function get()
-    {dd($this->getOriginal());
-        return new Result($this->getOriginal());
+        return new Result($this->search(), $this->rawParams);
     }
 
-    public function getOriginal(): array
+    public function get()
     {
-        return $this->runQuery($this->query->getEngine()->resolveSelect($this->query), 'search');
+        return new Paginator($this->search(), $this->rawParams);
+    }
+
+    public function search(): array
+    {
+        return $this->runQuery($this->query->getEngine()->resolveSelect($this->query));
     }
 
     /**
@@ -157,6 +160,8 @@ class Elastic
      */
     protected function runQuery(array $params, string $method = 'search')
     {
+        $this->rawParams = $params;
+
         $results = call_user_func([$this->query->getClient(), $method], $params);
 
         $this->query = $this->query->newQuery();
