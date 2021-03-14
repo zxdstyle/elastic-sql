@@ -4,9 +4,11 @@
 namespace Zxdstyle\ElasticSql;
 
 use Closure;
+use Elasticsearch\Common\Exceptions\Conflict409Exception;
 use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Elasticsearch\ClientBuilder;
 use Zxdstyle\ElasticSql\Exceptions\BadMethodCallException;
+use Zxdstyle\ElasticSql\Exceptions\DocumentExistsException;
 use Zxdstyle\ElasticSql\Exceptions\NotFoundDocumentException;
 use Zxdstyle\ElasticSql\Exceptions\RunTimeException;
 use Zxdstyle\ElasticSql\Supports\Paginator;
@@ -69,16 +71,20 @@ class Elastic
      * @param array $data
      * @param string $primaryKey
      * @return array
-     * @throws RunTimeException
+     * @throws RunTimeException|DocumentExistsException
      */
     public function create(array $data, $primaryKey = 'id'): array
     {
         $id = $data[$primaryKey] ?? null;
 
-        $result = $this->runQuery(
-            $this->query->getEngine()->resolveCreate($this->query, $id, $data),
-            'index'
-        );
+        try {
+            $result = $this->runQuery(
+                $this->query->getEngine()->resolveCreate($this->query, $id, $data),
+                'create'
+            );
+        } catch (Conflict409Exception $exception) {
+            throw new DocumentExistsException('Create error:'.$exception->getMessage());
+        }
 
         if (!isset($result['result']) || $result['result'] !== 'created') {
             throw new RunTimeException('Create error');
@@ -134,6 +140,15 @@ class Elastic
         } catch (Missing404Exception $exception) {
             throw new NotFoundDocumentException("Document [$id] not found");
         }
+    }
+
+    /**
+     * Destroy all data
+     * @return mixed
+     */
+    public function flush()
+    {
+        return $this->runQuery($this->query->getEngine()->resolveFlush($this->query), 'deleteByQuery');
     }
 
     public function first()

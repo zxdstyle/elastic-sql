@@ -15,7 +15,14 @@
 
 ## Usage
 
-TODO
+### 删除数据
+
+#### 清空数据
+```php
+    $elastic->index('test')->flush();
+```
+
+> {注意} 该操作会清空index中的所有数据，请谨慎使用
 
 ## Contributing
 

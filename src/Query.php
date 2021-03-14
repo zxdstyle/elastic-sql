@@ -150,15 +150,19 @@ class Query
 
     /**
      * @return $this
+     * @throws InvalidArgumentException
      */
     public function newQuery(): Query
     {
-        return new static($this->engine, $this->client);
+        $query = new static($this->engine, $this->client);
+
+        return $query->index((string) $this->index)->type((string) $this->type);
     }
 
     /**
      * @param string $name
      * @param $argument
+     * @return Query
      * @throws InvalidArgumentException
      */
     protected function set(string $name, $argument)

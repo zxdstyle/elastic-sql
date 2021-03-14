@@ -22,5 +22,8 @@
                 "Zxdstyle\\ElasticSql\\ServiceProvider"
             ]
         }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
     }
 }

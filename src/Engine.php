@@ -3,8 +3,6 @@
 
 namespace Zxdstyle\ElasticSql;
 
-
-use Illuminate\Support\Arr;
 use Zxdstyle\ElasticSql\Exceptions\ElasticException;
 use Zxdstyle\ElasticSql\Exceptions\InvalidIndexException;
 
@@ -93,6 +91,17 @@ class Engine
         ], $this->resolve($query));
     }
 
+    public function resolveFlush(Query $query): array
+    {
+        return array_merge([
+            'body' => [
+                'query' => [
+                    'match_all' => new \stdClass()
+                ]
+            ]
+        ], $this->resolve($query));
+    }
+
     public function resolveSelect(Query $query): array
     {
         $body = $this->resolve($query);
@@ -159,9 +168,9 @@ class Engine
                     $must[] = $this->resolveWheres($where['query']);
                 } else {
                     if ($where['operator'] == 'ne') {
-                        $mustNot[] = $this->whereLeaf($where['leaf'], $where['column'], $where['operator'], $where['value']);
+                        $mustNot[] = $this->whereLeaf($where['leaf'], $where['column'], $where['value'], $where['operator']);
                     } else {
-                        $must[] = $this->whereLeaf($where['leaf'], $where['column'], $where['operator'], $where['value']);
+                        $must[] = $this->whereLeaf($where['leaf'], $where['column'], $where['value'], $where['operator']);
                     }
                 }
             }
@@ -183,12 +192,12 @@ class Engine
         return $bool;
     }
 
-    protected function whereLeaf(string $leaf, string $column, string $operator = null, $value): array
+    protected function whereLeaf(string $leaf, string $column, $value, string $operator = null): array
     {
         if (strpos($column, '@') !== false) {
             $columnArr = explode('@', $column);
             $ret = ['nested'=>['path'=>$columnArr[0]]];
-            $ret['nested']['query']['bool']['must'][] = $this->whereLeaf($leaf, implode('.', $columnArr), $operator, $value);
+            $ret['nested']['query']['bool']['must'][] = $this->whereLeaf($leaf, implode('.', $columnArr), $value, $operator);
 
             return $ret;
         }

@@ -18,13 +18,4 @@ class Paginator extends Result
             'total_hits' => $this->getTotalHits()
         ];
     }
-
-    /**
-     * Convert Elasticsearch results into an json string
-     * @return false|string
-     */
-    public function toJson()
-    {
-        return json_encode($this->toArray());
-    }
 }
